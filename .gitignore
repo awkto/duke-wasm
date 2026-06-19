@@ -1,0 +1,24 @@
+# Never commit registered Duke data. Only the free shareware bundles are allowed.
+games/*.jsdos
+!games/duke1.jsdos
+!games/duke2.jsdos
+games/manifest.json
+
+# Commercial / user-supplied game data (registered episodes, registered DN2)
+*.DN1
+*.dn1
+*.DN2
+*.dn2
+*.DN3
+*.dn3
+NUKEM2.*
+nukem2.*
+
+# Local data staging for the box/pro server deployments (full game files)
+/data/
+/deploy/data/
+
+# Cruft
+.DS_Store
+node_modules/
+*.log

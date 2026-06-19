@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=overlays-content">
+  <title>Duke Nukem 1 &amp; 2 — in your browser</title>
+  <meta name="description" content="Play Duke Nukem (1991) and Duke Nukem II (1993) in your browser. Shareware plays instantly; bring your own data for the registered episodes.">
+  <!-- js-dos v8 (DOSBox compiled to WebAssembly) -->
+  <link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+  <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+  <!-- vendored: tiny zip builder used to assemble .jsdos bundles from your own data files -->
+  <script src="js/fflate.min.js"></script>
+  <link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+  <header id="topbar">
+    <h1>Duke&nbsp;Nukem <span class="eps">1 · 2</span></h1>
+    <p class="tagline">Apogee's side-scrolling classics (1991 &amp; 1993) — in your browser.</p>
+  </header>
+
+  <main id="launcher">
+    <!-- Server/kiosk mode: populated from games/manifest.json when the app runs
+         from the container with a mounted data dir. Hides the cards below. -->
+    <section id="server-games" class="card" hidden>
+      <h2>Games</h2>
+      <p>Detected on the server — click to play.</p>
+      <div id="server-games-list"></div>
+    </section>
+
+    <section class="card demo-card" id="demo-card">
+      <h2>Shareware <span class="badge free">free</span></h2>
+      <p>Freely-redistributable Apogee shareware — plays instantly, no files needed.</p>
+      <p><strong>Duke Nukem</strong> (1991) — Episode 1: Shrapnel City.</p>
+      <button id="play-duke1" class="play-btn">▶ Play Duke Nukem (Ep. 1)</button>
+      <p style="margin-top:1rem"><strong>Duke Nukem II</strong> (1993) — shareware episode.</p>
+      <button id="play-duke2" class="play-btn">▶ Play Duke Nukem II (shareware)</button>
+    </section>
+
+    <section class="card byo-card" id="byo-card">
+      <h2>Full versions <span class="badge byo">bring your own data</span></h2>
+      <p>
+        Own the registered games? Drop their files here to play the full
+        <em>Duke Nukem</em> (episodes 2 &amp; 3) and registered <em>Duke Nukem II</em>.
+        Nothing is uploaded — everything runs in your browser.
+      </p>
+
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <div class="dz-inner">
+          <div class="dz-icon">📁</div>
+          <p><strong>Drop game files here</strong> or click to choose</p>
+          <p class="dz-hint">Select <strong>all</strong> of the game's files (the whole folder):
+            Duke Nukem 1 → <code>DN1/DN2/DN3.EXE</code> + <code>*.DN1/.DN2/.DN3</code>;
+            Duke Nukem II → <code>NUKEM2.EXE</code> + <code>NUKEM2.CMP</code> + <code>NUKEM2.F*</code>.</p>
+        </div>
+        <input id="file-input" type="file" multiple hidden>
+      </div>
+
+      <div id="file-status" class="file-status" hidden></div>
+      <div id="byo-play-list"></div>
+    </section>
+
+    <section class="card saves-card" id="saves-card">
+      <h2>💾 Saved games</h2>
+      <p>Your progress is saved in this browser automatically. Download a save to back it up or
+        move it to another device; upload one to restore it.</p>
+      <div id="saves-list"></div>
+      <div class="save-actions">
+        <button id="save-upload" class="save-btn">⤒ Upload a save</button>
+        <input id="save-file-input" type="file" accept=".jsdos,.zip,application/octet-stream" hidden>
+      </div>
+    </section>
+
+    <section class="card settings-card">
+      <h2>⚙ Settings</h2>
+      <p>Applied when you start a game. Saves persist automatically in your browser.</p>
+      <label class="setting">Aspect ratio
+        <select id="set-aspect">
+          <option value="4/3">4:3 — classic CRT (default)</option>
+          <option value="AsIs">As-is — sharp 16:10</option>
+          <option value="5/4">5:4</option>
+          <option value="16/10">16:10</option>
+          <option value="16/9">16:9 — widescreen (stretched)</option>
+          <option value="1/1">1:1 — square pixels</option>
+          <option value="Fit">Fit window — fill the screen</option>
+        </select>
+      </label>
+      <label class="setting">Pixels
+        <select id="set-rendering">
+          <option value="pixelated">Crisp — pixel-perfect (default)</option>
+          <option value="smooth">Smooth — blurred</option>
+        </select>
+      </label>
+      <label class="setting">Touch controls
+        <select id="set-touch">
+          <option value="auto">Auto — on for touch devices (default)</option>
+          <option value="on">Always on</option>
+          <option value="off">Off</option>
+        </select>
+      </label>
+      <label class="setting">Engine
+        <select id="set-engine">
+          <option value="dosbox">DOSBox — default, lighter</option>
+          <option value="dosboxX">DOSBox-X — real-time Save/Load states</option>
+        </select>
+      </label>
+    </section>
+  </main>
+
+  <!-- The js-dos player mounts here when a game launches -->
+  <div id="game-stage" class="game-stage" hidden>
+    <div id="dos" class="dos-window"></div>
+
+    <!-- On-screen controls for touch devices. Sends key events straight to the
+         emulator. Duke defaults: arrows move, Ctrl=Jump, Alt=Fire. -->
+    <div id="touch-controls" class="touch-controls" hidden>
+      <div class="stick" id="stick" aria-label="movement joystick">
+        <div class="stick-knob" id="stick-knob"></div>
+      </div>
+
+      <!-- Y / N for the game's keyboard confirm prompts (top-right). -->
+      <div class="yn-keys" id="yn-keys">
+        <button class="ynbtn" data-keys="89">Y</button>
+        <button class="ynbtn" data-keys="78">N</button>
+      </div>
+
+      <!-- Realtime save states (DOSBox-X only): the 💾 button opens a Save/Load
+           popup; tapping SAVE/LOAD runs the emulator state action and closes it. -->
+      <button class="saveload-btn" id="saveload-btn" aria-label="Save / Load state">💾</button>
+      <div class="saveload-popup" id="saveload-popup" hidden>
+        <button class="statebtn save" id="savestate-btn" aria-label="Save state">SAVE</button>
+        <button class="statebtn load" id="loadstate-btn" aria-label="Load state">LOAD</button>
+      </div>
+
+      <div class="menu-keys">
+        <button class="mbtn" data-keys="257" aria-label="Enter">⏎</button>
+        <button class="mbtn" data-keys="256" aria-label="Escape">ESC</button>
+      </div>
+
+      <!-- Action buttons (FIRE=Alt, JUMP=Ctrl) are built per-game in launch(). -->
+      <div class="actions"></div>
+    </div>
+
+    <!-- Touch keyboard: focusing the hidden input pops the device's soft keyboard
+         (which overlays the on-screen controls); keystrokes are forwarded to the
+         emulator. Handy for typing save-game names. -->
+    <button id="kbd-btn" class="kbd-btn" title="Keyboard" aria-label="Toggle keyboard">⌨</button>
+    <input id="kbd-proxy" class="kbd-proxy" type="text" inputmode="text"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+           tabindex="-1" aria-hidden="true">
+  </div>
+
+  <footer id="footer">
+    <p>
+      Powered by <a href="https://js-dos.com" target="_blank" rel="noopener">js-dos</a> (DOSBox → WebAssembly).
+      Runs 100% in your browser. <a href="https://github.com/awkto/duke-wasm" target="_blank" rel="noopener">Source on GitHub</a>.
+    </p>
+    <p class="legal">
+      Duke Nukem © Apogee / 3D Realms. Only the freely-redistributable shareware is included;
+      registered episodes are not bundled — supply your own.
+    </p>
+  </footer>
+
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

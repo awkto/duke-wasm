@@ -1,0 +1,31 @@
+# duke-wasm — per-host deployment (box.dnsif.ca / pro.dnsif.ca).
+#
+# Each host runs this same compose file. Put the FULL retail game files under
+# /srv/duke-data (one subdir per game) — the container detects them at startup,
+# serves every episode, and hides the bring-your-own upload UI.
+#
+#   /srv/duke-data/duke1/DN1.EXE DN2.EXE DN3.EXE *.DN1 *.DN2 *.DN3 ...
+#   /srv/duke-data/duke2/NUKEM2.EXE NUKEM2.CMP NUKEM2.F* ...
+#
+# The container listens on 127.0.0.1:5028; the host's nginx reverse proxy
+# (deploy/nginx-duke.conf) terminates TLS and proxies to it.
+#
+# NOTE: box.dnsif.ca and pro.dnsif.ca already run a host-level Watchtower that
+# auto-updates these game containers, so no watchtower service is defined here.
+# On a fresh host without one, run:
+#   docker run -d --name watchtower --restart unless-stopped \
+#     -v /var/run/docker.sock:/var/run/docker.sock \
+#     containrrr/watchtower --cleanup --interval 300
+services:
+  duke-wasm:
+    image: awkto/duke-wasm:latest
+    # …or build locally instead (comment out `image:` above, uncomment below):
+    # build:
+    #   context: ..
+    #   dockerfile: Dockerfile
+    container_name: duke-wasm
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5028:80"
+    volumes:
+      - /srv/duke-data:/data:ro
