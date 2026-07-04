@@ -10,7 +10,7 @@
   <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
   <!-- vendored: tiny zip builder used to assemble .jsdos bundles from your own data files -->
   <script src="js/fflate.min.js"></script>
-  <link rel="stylesheet" href="css/app.css?v=1">
+  <link rel="stylesheet" href="css/app.css?v=2">
 </head>
 <body>
   <header id="topbar">
@@ -86,8 +86,19 @@
       </label>
       <label class="setting">Pixels
         <select id="set-rendering">
-          <option value="pixelated">Crisp — pixel-perfect (default)</option>
-          <option value="smooth">Smooth — blurred</option>
+          <option value="pixelated">Crisp — pixel-perfect</option>
+          <option value="smooth">Smooth — soft pixels (default)</option>
+        </select>
+      </label>
+      <label class="setting">Screen filter
+        <select id="set-filter">
+          <option value="off">Off</option>
+          <option value="scanlines">Scanlines (default)</option>
+          <option value="crt">CRT — scanlines + mask + vignette</option>
+          <option value="curved">CRT curved</option>
+          <option value="rgb">RGB — aperture mask</option>
+          <option value="amber">Amber — monochrome</option>
+          <option value="green">Green — phosphor</option>
         </select>
       </label>
       <label class="setting">Touch controls
@@ -109,6 +120,11 @@
   <!-- The js-dos player mounts here when a game launches -->
   <div id="game-stage" class="game-stage" hidden>
     <div id="dos" class="dos-window"></div>
+
+    <!-- Visual filter overlay (scanlines / CRT). A WebGL canvas sized to the game
+         canvas; scanline/mask pitch locked to the 320x200 grid so it lines up with
+         the actual game pixels. Chosen in Settings (applies live). -->
+    <canvas id="crt-canvas" class="crt-canvas" aria-hidden="true"></canvas>
 
     <!-- On-screen controls for touch devices. Sends key events straight to the
          emulator. Duke defaults: arrows move, Ctrl=Jump, Alt=Fire. -->
@@ -160,6 +176,6 @@
     </p>
   </footer>
 
-  <script src="js/app.js?v=1"></script>
+  <script src="js/app.js?v=2"></script>
 </body>
 </html>
