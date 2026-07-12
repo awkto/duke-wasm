@@ -187,7 +187,7 @@ async function captureSave(key) {
 
 // ---- settings (persisted in localStorage) ----------------------------------
 
-const SETTING_DEFAULTS = { aspect: "4/3", rendering: "smooth", touch: "auto", engine: "dosbox", filter: "scanlines" };
+const SETTING_DEFAULTS = { aspect: "4/3", rendering: "pixelated", touch: "auto", engine: "dosbox", filter: "scanlines" };
 const getSetting = (k) => localStorage.getItem("duke." + k) || SETTING_DEFAULTS[k];
 const setSetting = (k, v) => localStorage.setItem("duke." + k, v);
 
